@@ -1,0 +1,99 @@
+(* Using effects and handlers to handle correct / compositional sizing of delimiters that bubbles outward from the interior of an expression. *)
+
+type size =
+  | Normal
+  | Big
+  | Bigg
+
+type node =
+  | Str of string
+  | Size of size
+  | LParen
+  | RParen
+
+effect Delim : size -> unit
+effect Write : node -> unit
+
+type doc = unit -> unit
+
+let empty : doc =
+  fun () -> ()
+
+let rec join (xs : doc list) : doc =
+  match xs with
+  | [] -> empty
+  | x :: xs ->
+    fun () ->
+    x ();
+    join xs ()
+
+let write : node -> doc =
+  fun x () ->
+  perform (Write x)
+
+let rec writes (xs : node list) : doc =
+  match xs with
+  | [] -> fun () -> ()
+  | x :: xs ->
+    fun () ->
+    write x ();
+    writes xs ()
+
+let delim size : doc =
+  fun () ->
+  perform (Delim size)
+
+let delimiter (left : doc) (right : doc) : doc list -> doc =
+  fun bdy () ->
+  let out, size =
+    with
+      handler
+      | x -> [], Normal
+      | effect (Write node) k ->
+        let out, size = continue k () in
+        node :: out, size
+      | effect (Delim size) k ->
+        let out, size' = continue k () in
+        out, max size size'
+    handle
+      join bdy ()
+  in
+  join [
+    delim size;
+    write (Size size);
+    left;
+    writes out;
+    write (Size size);
+    right
+  ] ()
+
+
+let prn : doc list -> doc =
+  delimiter (write LParen) (write RParen)
+
+
+let str : string -> doc =
+  fun x ->
+  write (Str x)
+
+let runner : 'a => 'a * node list =
+  handler
+  | x -> x, []
+  | effect (Write node) k ->
+    let (res, out) = continue k () in
+    (res, node :: out)
+  | effect (Delim j) k ->
+    let (res, out) = continue k () in
+    (res, out)
+
+let mydoc =
+  prn [
+    delim Big;
+    str "asdf";
+    prn [str "bar"]
+  ]
+
+let results =
+  let (_, out) = with runner handle mydoc () in
+  out
+

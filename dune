@@ -1,0 +1,4 @@
+(library
+ (name jmsdelim)
+ (flags
+  (:standard -w -37-26-27-32)))
