@@ -33,10 +33,10 @@ module B = Bubble.Make (Size) (TeX)
 
 let delim ~left ~right bdy =
   B.scope (B.join bdy) @@ fun size out ->
-  B.join
-    [B.write [`Size size; left];
-     B.write out;
-     B.write [`Size size; right]]
+  B.write @@
+  [`Size size; left]
+  @ out
+  @ [`Size size; right]
 
 let prn : B.doc list -> B.doc =
   delim ~left:`Lparen ~right:`Rparen
