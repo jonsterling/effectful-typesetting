@@ -54,16 +54,7 @@ struct
 
   let scope (doc : doc) (kont : S.t -> N.t -> doc) : doc =
     fun () ->
-    let out, st =
-      match doc () with
-      | () -> N.empty, S.default
-      | effect (Write x) k ->
-        let out, st = continue k () in
-        N.append x out, st
-      | effect (Bubble st) k ->
-        let out, st' = continue k () in
-        out, S.merge st st'
-    in
+    let out, st = run doc in
     join [bubble st; kont st out] ()
 end
 
@@ -114,7 +105,7 @@ let prn : B.doc list -> B.doc =
 let str x = B.write [`Str x ]
 
 let example : B.doc =
-  prn [B.bubble `Big; prn [str "asdf"]]
+  prn [prn [B.bubble `Big; str "asdf"]; prn [str "foo"]]
 
 let foo =
   B.run example
