@@ -19,6 +19,7 @@ sig
 
   val bubble : S.t -> doc
   val write : N.t -> doc
+  val empty : doc
   val join : doc list -> doc
   val scope : doc -> (S.t -> N.t -> doc) -> doc
 

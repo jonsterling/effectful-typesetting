@@ -1,4 +1,4 @@
 (library
- (name jmsdelim)
+ (name bubble)
  (flags
   (:standard -w -37-26-27-32)))

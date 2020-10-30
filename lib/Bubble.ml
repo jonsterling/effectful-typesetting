@@ -25,9 +25,11 @@ struct
   let write x () =
     perform @@ Write x
 
+  let empty () = ()
+
   let rec join docs =
     match docs with
-    | [] -> fun () -> ()
+    | [] -> empty
     | doc :: docs ->
       fun () ->
         doc ();
